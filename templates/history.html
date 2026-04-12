@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalDesk History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-body">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-lockup">
+                <p class="eyebrow">SignalDesk</p>
+                <h2>News Integrity Lab</h2>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/history" class="active">History</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/workspace">Workspace</a>
+                <a href="/logout">Logout</a>
+            </nav>
+
+            <div class="sidebar-note">
+                <p>Signed in as</p>
+                <strong>{{ username }}</strong>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-copy">
+                    <button class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Toggle navigation">Menu</button>
+                    <div>
+                        <p class="eyebrow">History</p>
+                        <h1>Prediction log</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="clock-panel">
+                        <span class="panel-label">Local time</span>
+                        <strong id="clock"></strong>
+                    </div>
+                    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">Theme</button>
+                </div>
+            </header>
+
+            <section class="hero-banner">
+                <div>
+                    <p class="eyebrow">Archive</p>
+                    <h2>Review recent model decisions and the text snippets that were analyzed.</h2>
+                </div>
+                <div class="hero-meta">
+                    <div>
+                        <span class="panel-label">Entries</span>
+                        <strong>{{ history|length }}</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card history-board">
+                <form action="/history" method="GET" class="filter-bar">
+                    <label class="field compact-field">
+                        <span>Result filter</span>
+                        <select name="result" onchange="this.form.submit()">
+                            <option value="ALL" {% if selected_result == 'ALL' %}selected{% endif %}>All</option>
+                            <option value="REAL NEWS" {% if selected_result == 'REAL NEWS' %}selected{% endif %}>Real News</option>
+                            <option value="FAKE NEWS" {% if selected_result == 'FAKE NEWS' %}selected{% endif %}>Fake News</option>
+                        </select>
+                    </label>
+                </form>
+
+                {% if history %}
+                    <div class="history-list">
+                        {% for item in history %}
+                            <article class="history-card {{ 'real' if item.result == 'REAL NEWS' else 'fake' }}">
+                                <div class="history-card-top">
+                                    <div>
+                                        <p class="history-label">{{ item.result }}</p>
+                                        <small>{{ item.confidence }}% confidence</small>
+                                    </div>
+                                    <span>{{ item.time }}</span>
+                                </div>
+                                <p>{{ item.text }}</p>
+                                <div class="chip-row">
+                                    <span class="chip">{{ item.word_count }} words</span>
+                                    <span class="chip">{{ item.reading_time }} min read</span>
+                                    <span class="chip">{{ item.flagged_count }} flags</span>
+                                    {% if item.flagged_terms %}
+                                        {% for flag in item.flagged_terms[:2] %}
+                                            <span class="chip danger">{{ flag }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state roomy">
+                        <h3>No prediction history yet</h3>
+                        <p>The dashboard will start building a timeline after the first article is analyzed.</p>
+                        <a href="/dashboard" class="primary-btn inline-btn">Go to Dashboard</a>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</body>
+</html>

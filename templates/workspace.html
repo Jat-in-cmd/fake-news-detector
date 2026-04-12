@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalDesk Workspace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-body">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-lockup">
+                <p class="eyebrow">SignalDesk</p>
+                <h2>News Integrity Lab</h2>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/history">History</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/workspace" class="active">Workspace</a>
+                <a href="/logout">Logout</a>
+            </nav>
+
+            <div class="sidebar-note">
+                <p>Signed in as</p>
+                <strong>{{ username }}</strong>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-copy">
+                    <button class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Toggle navigation">Menu</button>
+                    <div>
+                        <p class="eyebrow">Workspace</p>
+                        <h1>Analyst operations room</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="clock-panel">
+                        <span class="panel-label">Local time</span>
+                        <strong id="clock"></strong>
+                    </div>
+                    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">Theme</button>
+                </div>
+            </header>
+
+            <section class="hero-banner">
+                <div>
+                    <p class="eyebrow">Manual review</p>
+                    <h2>Keep your review flow organized with checklists, operating notes, and a quick activity feed.</h2>
+                </div>
+                <div class="hero-meta">
+                    <div>
+                        <span class="panel-label">Operator</span>
+                        <strong>{{ username }}</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="multi-window-grid">
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Checklist</p>
+                            <h3>Review steps</h3>
+                        </div>
+                    </div>
+
+                    <div class="task-list">
+                        {% for item in checklist %}
+                            <label class="task-item">
+                                <input type="checkbox">
+                                <span>{{ item }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Operating notes</p>
+                            <h3>Desk guidance</h3>
+                        </div>
+                    </div>
+
+                    <div class="notes-grid">
+                        <article class="note-box">
+                            <strong>When confidence is high</strong>
+                            <p>Use the result as a strong signal, but still verify source quality and publication context.</p>
+                        </article>
+                        <article class="note-box">
+                            <strong>When confidence is mid-range</strong>
+                            <p>Escalate to manual verification and compare headline tone with quoted evidence.</p>
+                        </article>
+                        <article class="note-box">
+                            <strong>When trigger phrases pile up</strong>
+                            <p>Treat the article as higher risk and look for emotional framing or missing attribution.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Activity feed</p>
+                            <h3>Recent notifications</h3>
+                        </div>
+                    </div>
+
+                    {% if notifications %}
+                        <div class="activity-list">
+                            {% for note in notifications %}
+                                <article class="activity-item">
+                                    <span class="status-dot"></span>
+                                    <p>{{ note }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <h4>No activity yet</h4>
+                            <p>System events and prediction updates will show up here.</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

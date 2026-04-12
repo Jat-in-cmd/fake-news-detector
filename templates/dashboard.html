@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalDesk Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-body">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-lockup">
+                <p class="eyebrow">SignalDesk</p>
+                <h2>News Integrity Lab</h2>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/dashboard" class="active">Dashboard</a>
+                <a href="/history">History</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/workspace">Workspace</a>
+                <a href="/logout">Logout</a>
+            </nav>
+
+            <div class="sidebar-note">
+                <p>Signed in as</p>
+                <strong>{{ username }}</strong>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-copy">
+                    <button class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Toggle navigation">Menu</button>
+                    <div>
+                        <p class="eyebrow">Live workspace</p>
+                        <h1>Fake news detection dashboard</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="clock-panel">
+                        <span class="panel-label">Local time</span>
+                        <strong id="clock"></strong>
+                    </div>
+
+                    <div class="notification-container">
+                        <button class="icon-btn notification-btn" onclick="toggleNotifications()" aria-label="Toggle notifications">
+                            Alerts
+                            <span class="badge">{{ notifications|length }}</span>
+                        </button>
+
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <p class="dropdown-title">Recent activity</p>
+                            {% if notifications %}
+                                {% for note in notifications %}
+                                    <p>{{ note }}</p>
+                                {% endfor %}
+                            {% else %}
+                                <p>No notifications yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">Theme</button>
+                </div>
+            </header>
+
+            <section class="hero-banner">
+                <div>
+                    <p class="eyebrow">Overview</p>
+                    <h2>Screen articles, spot patterns, and review the latest model decision in one place.</h2>
+                </div>
+                <div class="hero-meta">
+                    <div>
+                        <span class="panel-label">Operator</span>
+                        <strong>{{ username }}</strong>
+                    </div>
+                    <div>
+                        <span class="panel-label">Session status</span>
+                        <strong>Active</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stats">
+                <article class="card stat-card accent-blue">
+                    <p>Total Predictions</p>
+                    <span class="counter" data-target="{{ total }}">0</span>
+                </article>
+                <article class="card stat-card accent-green">
+                    <p>Real News</p>
+                    <span class="counter" data-target="{{ real }}">0</span>
+                </article>
+                <article class="card stat-card accent-red">
+                    <p>Fake News</p>
+                    <span class="counter" data-target="{{ fake }}">0</span>
+                </article>
+                <article class="card stat-card accent-gold">
+                    <p>Avg. Confidence</p>
+                    <span class="counter" data-target="{{ avg_confidence|int }}">0</span>
+                </article>
+            </section>
+
+            <section class="dashboard-grid">
+                <section class="detector-box card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Detector</p>
+                            <h3>Analyze a news article</h3>
+                        </div>
+                        <p class="helper-copy">Paste the article text or a representative excerpt below.</p>
+                    </div>
+
+                    <form action="/predict" method="POST" onsubmit="showLoader()" class="detector-form">
+                        <label class="field">
+                            <span>Article text</span>
+                            <textarea name="news" id="newsInput" placeholder="Paste your news article here..." required></textarea>
+                        </label>
+
+                        <div class="form-footer">
+                            <p class="char-count"><span id="charCount">0</span> characters</p>
+                            <button type="submit" class="primary-btn">Analyze News</button>
+                        </div>
+                    </form>
+
+                    <div id="loader" class="loader hidden" aria-hidden="true"></div>
+                </section>
+
+                <aside class="insights-column">
+                    <section class="card latest-card">
+                        <div class="section-heading">
+                            <div>
+                                <p class="eyebrow">Latest result</p>
+                                <h3>Most recent classification</h3>
+                            </div>
+                        </div>
+
+                        {% if latest %}
+                            <div class="result-box {{ latest.color }}">
+                                <div class="result-header">
+                                    <h2>{{ latest.label }}</h2>
+                                    <span class="result-pill">{{ latest.confidence }}%</span>
+                                </div>
+                                <p>Confidence score based on the current model decision boundary.</p>
+                                <div class="micro-metrics">
+                                    <div>
+                                        <small>Words</small>
+                                        <strong>{{ latest.word_count }}</strong>
+                                    </div>
+                                    <div>
+                                        <small>Flags</small>
+                                        <strong>{{ latest.flagged_count }}</strong>
+                                    </div>
+                                    <div>
+                                        <small>Read time</small>
+                                        <strong>{{ latest.reading_time }} min</strong>
+                                    </div>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" data-width="{{ latest.confidence }}"></div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <h4>No prediction yet</h4>
+                                <p>Run your first article analysis to populate this panel.</p>
+                            </div>
+                        {% endif %}
+                    </section>
+
+                    <section class="card mini-feed">
+                        <div class="section-heading">
+                            <div>
+                                <p class="eyebrow">Recent checks</p>
+                                <h3>Latest review activity</h3>
+                            </div>
+                        </div>
+
+                        {% if recent_history %}
+                            <div class="history-preview">
+                                {% for item in recent_history %}
+                                    <article class="history-snippet">
+                                        <div class="snippet-top">
+                                            <strong>{{ item.result }}</strong>
+                                            <span>{{ item.time }}</span>
+                                        </div>
+                                        <p>{{ item.text }}</p>
+                                        <small>{{ item.confidence }}% confidence</small>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <h4>No history yet</h4>
+                                <p>Predictions will appear here after the first analysis.</p>
+                            </div>
+                        {% endif %}
+                    </section>
+                </aside>
+            </section>
+
+            <section class="multi-window-grid">
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Article signals</p>
+                            <h3>Text inspection window</h3>
+                        </div>
+                    </div>
+
+                    {% if latest_metrics %}
+                        <div class="signal-grid">
+                            <article class="signal-tile">
+                                <small>Word count</small>
+                                <strong>{{ latest_metrics.word_count }}</strong>
+                            </article>
+                            <article class="signal-tile">
+                                <small>Sentence count</small>
+                                <strong>{{ latest_metrics.sentence_count }}</strong>
+                            </article>
+                            <article class="signal-tile">
+                                <small>Uppercase ratio</small>
+                                <strong>{{ latest_metrics.uppercase_ratio }}</strong>
+                            </article>
+                            <article class="signal-tile">
+                                <small>Reading time</small>
+                                <strong>{{ latest_metrics.reading_time }} min</strong>
+                            </article>
+                        </div>
+
+                        <div class="flag-board">
+                            <p class="panel-label">Suspicious phrases</p>
+                            {% if latest_metrics.flagged_terms %}
+                                <div class="chip-row">
+                                    {% for flag in latest_metrics.flagged_terms %}
+                                        <span class="chip danger">{{ flag }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="chip-row">
+                                    <span class="chip safe">No strong trigger phrases found</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <h4>No article metrics yet</h4>
+                            <p>Analyze a story to unlock this inspection panel.</p>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Risk overview</p>
+                            <h3>Monitoring window</h3>
+                        </div>
+                    </div>
+
+                    <div class="metric-stack">
+                        <div class="metric-row">
+                            <span>Fake rate</span>
+                            <strong>{{ fake_rate }}%</strong>
+                        </div>
+                        <div class="progress-shell">
+                            <div class="progress-fill warm" style="width: {{ fake_rate }}%;"></div>
+                        </div>
+                        <div class="metric-row">
+                            <span>Average confidence</span>
+                            <strong>{{ avg_confidence }}%</strong>
+                        </div>
+                    </div>
+
+                    <div class="flag-board">
+                        <p class="panel-label">Most common flags</p>
+                        {% if common_flags %}
+                            <div class="common-flag-list">
+                                {% for flag, count in common_flags %}
+                                    <div class="metric-row">
+                                        <span>{{ flag }}</span>
+                                        <strong>{{ count }}</strong>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="muted-copy">Common phrase analytics will appear once predictions build up.</p>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="card window-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Operations</p>
+                            <h3>Analyst quick actions</h3>
+                        </div>
+                    </div>
+
+                    <div class="action-list">
+                        <a href="/analytics" class="action-tile">
+                            <strong>Open analytics board</strong>
+                            <span>Inspect confidence bands and recent result distribution.</span>
+                        </a>
+                        <a href="/history" class="action-tile">
+                            <strong>Review prediction history</strong>
+                            <span>Filter previous checks and inspect stored article snapshots.</span>
+                        </a>
+                        <a href="/workspace" class="action-tile">
+                            <strong>Open analyst workspace</strong>
+                            <span>Use the manual review checklist and operating notes.</span>
+                        </a>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
